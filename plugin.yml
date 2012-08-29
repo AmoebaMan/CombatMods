@@ -1,0 +1,11 @@
+main: com.amoebaman.combatmods.CombatMods
+
+name: CombatMods
+version: 1.3
+author: AmoebaMan
+description: Various additions/adjustments to make combat more fun
+
+commands:
+  cmreload:
+    description: Reloads values from config.yml
+    usage: /cmreload

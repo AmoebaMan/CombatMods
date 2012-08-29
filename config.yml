@@ -1,0 +1,33 @@
+parrying:
+  enabled: true
+  parry-time: 250
+  parry-chance: 1
+  parry-message: '&2*** Parried ***'
+  disarm-time: 350
+  disarm-chance: 0.3
+  disarm-message: '&4*** Disarmed ***'
+  fumble-time: 350
+  fumble-chance: 0.3
+  fumble-message: '&4*** Fumbled weapon ***'
+headshots:
+  enabled: true
+  multiplier: true
+  dealt-message: '&2*** Headshot ***'
+  taken-message: '&4*** Headshot ***'
+lunging:
+  enabled: true
+  leap: 1.5
+  message: '&4*** Lunged ***'
+armored-boats:
+  enabled: true
+fast-arrows:
+  enabled: true
+  speed: 1.5
+  disable-damage-increase: true
+arrow-retrieval:
+  enabled: true
+  retrieval-rate: 0.9
+antispam-bows:
+  enabled: true
+  minimum-draw: 1000 
+  message: '&4*** Fumbled arrow ***'
