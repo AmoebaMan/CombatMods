@@ -1,9 +1,9 @@
 main: com.amoebaman.combatmods.CombatMods
 
 name: CombatMods
-version: 1.3
+version: 1.4
 author: AmoebaMan
-description: Various additions/adjustments to make combat more fun
+description: Various additions/adjustments to make combat more fun and/or realistic
 
 commands:
   cmreload:

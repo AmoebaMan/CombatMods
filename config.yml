@@ -11,7 +11,7 @@ parrying:
   fumble-message: '&4*** Fumbled weapon ***'
 headshots:
   enabled: true
-  multiplier: true
+  multiplier: 2
   dealt-message: '&2*** Headshot ***'
   taken-message: '&4*** Headshot ***'
 lunging:
@@ -20,14 +20,18 @@ lunging:
   message: '&4*** Lunged ***'
 armored-boats:
   enabled: true
+  prevent-boat-litter: true
 fast-arrows:
   enabled: true
   speed: 1.5
   disable-damage-increase: true
 arrow-retrieval:
   enabled: true
-  retrieval-rate: 0.9
+  retrieval-rate: 0.7
 antispam-bows:
   enabled: true
-  minimum-draw: 1000 
+  minimum-draw: 750
   message: '&4*** Fumbled arrow ***'
+broken-knees:
+  enabled: true
+  fall-multiplier: 2

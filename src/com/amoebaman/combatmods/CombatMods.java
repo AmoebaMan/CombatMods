@@ -35,7 +35,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class CombatMods extends JavaPlugin implements Listener{
 
 	private PluginLogger log;
-	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows;
+	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees;
 	private File configFile;
 	
 	public void onEnable(){
@@ -62,6 +62,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			fastArrows = getConfig().getConfigurationSection("fast-arrows");
 			arrowRetrieval = getConfig().getConfigurationSection("arrow-retrieval");
 			antispamBows = getConfig().getConfigurationSection("antispam-bows");
+			brokenKnees = getConfig().getConfigurationSection("broken-knees");
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -167,7 +168,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 	public void armoredBoats(VehicleDestroyEvent event){
 		if(!armoredBoats.getBoolean("enabled"))
 			return;
-		if(event.getVehicle() instanceof Boat)
+		if(event.getVehicle() instanceof Boat && !event.getAttacker().equals(event.getVehicle().getPassenger()))
 			event.setCancelled(true);
 	}
 	
@@ -175,7 +176,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 	public void cleanDeadBoats(PlayerDeathEvent event){
 		if(!armoredBoats.getBoolean("enabled"))
 			return;
-		if(event.getEntity().getVehicle() instanceof Boat)
+		if(event.getEntity().getVehicle() instanceof Boat && armoredBoats.getBoolean("prevent-boat-litter"))
 			event.getEntity().getVehicle().remove();
 	}
 	
@@ -183,7 +184,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 	public void cleanVacatedBoats(VehicleExitEvent event){
 		if(!armoredBoats.getBoolean("enabled"))
 			return;
-		if(event.getVehicle() instanceof Boat)
+		if(event.getVehicle() instanceof Boat && armoredBoats.getBoolean("prevent-boat-litter"))
 			event.getVehicle().remove();
 	}
 	
@@ -269,8 +270,18 @@ public class CombatMods extends JavaPlugin implements Listener{
 			lastBowDraw.put(shooter.getName(), 0L);
 		if(System.currentTimeMillis() - lastBowDraw.get(shooter.getName()) < antispamBows.getInt("minimum-draw")){
 			event.setCancelled(true);
+			if(!shooter.getItemInHand().getEnchantments().containsKey(Enchantment.ARROW_INFINITE))
+				shooter.getWorld().dropItemNaturally(shooter.getLocation(), new ItemStack(Material.ARROW, 1));
 			shooter.sendMessage(ChatColor.translateAlternateColorCodes('&', antispamBows.getString("message")));
 		}
+	}
+	
+	@EventHandler
+	public void brokenKnees(EntityDamageEvent event){
+		if(!brokenKnees.getBoolean("enabled"))
+			return;
+		if(event.getCause() == DamageCause.FALL)
+			event.setDamage((int) (event.getDamage() * brokenKnees.getDouble("fall-multiplier")));
 	}
 	
 }
