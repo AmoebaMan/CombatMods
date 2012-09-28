@@ -168,7 +168,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 	public void armoredBoats(VehicleDestroyEvent event){
 		if(!armoredBoats.getBoolean("enabled"))
 			return;
-		if(event.getVehicle() instanceof Boat && !event.getAttacker().equals(event.getVehicle().getPassenger()))
+		if(event.getVehicle() instanceof Boat && event.getAttacker() != null && !event.getAttacker().equals(event.getVehicle().getPassenger()))
 			event.setCancelled(true);
 	}
 	
@@ -270,7 +270,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			lastBowDraw.put(shooter.getName(), 0L);
 		if(System.currentTimeMillis() - lastBowDraw.get(shooter.getName()) < antispamBows.getInt("minimum-draw")){
 			event.setCancelled(true);
-			if(!shooter.getItemInHand().getEnchantments().containsKey(Enchantment.ARROW_INFINITE))
+			if(!shooter.getItemInHand().containsEnchantment(Enchantment.ARROW_INFINITE))
 				shooter.getWorld().dropItemNaturally(shooter.getLocation(), new ItemStack(Material.ARROW, 1));
 			shooter.sendMessage(ChatColor.translateAlternateColorCodes('&', antispamBows.getString("message")));
 		}
@@ -279,6 +279,12 @@ public class CombatMods extends JavaPlugin implements Listener{
 	@EventHandler
 	public void brokenKnees(EntityDamageEvent event){
 		if(!brokenKnees.getBoolean("enabled"))
+			return;
+		Player player = null;
+		if(event.getEntity() instanceof Player)
+			player = (Player) event.getEntity();
+		boolean featherFalling = player != null && player.getInventory().getBoots() != null && player.getInventory().getBoots().containsEnchantment(Enchantment.PROTECTION_FALL);
+		if(brokenKnees.getBoolean("feather-falling") && featherFalling)
 			return;
 		if(event.getCause() == DamageCause.FALL)
 			event.setDamage((int) (event.getDamage() * brokenKnees.getDouble("fall-multiplier")));

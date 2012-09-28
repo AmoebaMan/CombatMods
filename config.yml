@@ -35,3 +35,4 @@ antispam-bows:
 broken-knees:
   enabled: true
   fall-multiplier: 2
+  feather-falling: true
