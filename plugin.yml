@@ -4,6 +4,7 @@ name: CombatMods
 version: 1.4.1
 author: AmoebaMan
 description: Various additions/adjustments to make combat more fun and/or realistic
+depend: [PvPStatTracker]
 
 commands:
   cmreload:

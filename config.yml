@@ -5,19 +5,19 @@ parrying:
   parry-message: '&2*** Parried ***'
   disarm-time: 350
   disarm-chance: 0.3
-  disarm-message: '&4*** Disarmed ***'
+  disarm-message: '&c*** Disarmed ***'
   fumble-time: 350
   fumble-chance: 0.3
-  fumble-message: '&4*** Fumbled weapon ***'
+  fumble-message: '&c*** Fumbled weapon ***'
 headshots:
   enabled: true
   multiplier: 2
   dealt-message: '&2*** Headshot ***'
-  taken-message: '&4*** Headshot ***'
+  taken-message: '&c*** Headshot ***'
 lunging:
   enabled: true
   leap: 1.5
-  message: '&4*** Lunged ***'
+  message: '&c*** Lunged ***'
 armored-boats:
   enabled: true
   prevent-boat-litter: true
@@ -31,8 +31,12 @@ arrow-retrieval:
 antispam-bows:
   enabled: true
   minimum-draw: 750
-  message: '&4*** Fumbled arrow ***'
+  message: '&c*** Fumbled arrow ***'
 broken-knees:
   enabled: true
   fall-multiplier: 2
   feather-falling: true
+assassinations:
+  enabled: true
+  dealt-message: '&2*** Assassinated ***'
+  taken-message: '&c*** Assassinated ***'

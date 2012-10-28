@@ -17,6 +17,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -24,6 +25,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
@@ -32,11 +34,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.amoebaman.pvpstattracker.StatHandler;
+import com.amoebaman.pvpstattracker.Statistic;
+
 public class CombatMods extends JavaPlugin implements Listener{
 
 	private PluginLogger log;
-	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees;
+	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations;
 	private File configFile;
+	private boolean statTracking;
 	
 	public void onEnable(){
 		log = new PluginLogger(this);
@@ -63,11 +69,20 @@ public class CombatMods extends JavaPlugin implements Listener{
 			arrowRetrieval = getConfig().getConfigurationSection("arrow-retrieval");
 			antispamBows = getConfig().getConfigurationSection("antispam-bows");
 			brokenKnees = getConfig().getConfigurationSection("broken-knees");
+			assassinations = getConfig().getConfigurationSection("assassinations");
 		}
 		catch(Exception e){
 			e.printStackTrace();
 			throw new Exception();
 		}
+		
+		statTracking = Bukkit.getPluginManager().getPlugin("PvPStatTracker") != null;
+		if(statTracking){
+			StatHandler.registerStat(new Statistic("Life-saving parries", new String[]{"combat"}, int.class, 0));
+			StatHandler.registerStat(new Statistic("Headshots", new String[]{"combat"}, int.class, 0));
+			StatHandler.registerStat(new Statistic("Assassinations", new String[]{"combat"}, int.class, 0));
+		}
+		
 		for(String component : getConfig().getKeys(false))
 			log.fine(component + " " + (getConfig().getConfigurationSection(component).getBoolean("enabled") ? "enabled" : "disabled"));
 	}
@@ -116,13 +131,15 @@ public class CombatMods extends JavaPlugin implements Listener{
 		if(!(event.getEntity() instanceof Player))
 			return;
 		Player player = (Player) event.getEntity();
-		if(player.isBlocking() && (event.getCause() == DamageCause.ENTITY_ATTACK || event.getCause() == DamageCause.PROJECTILE)){
+		if(player.isBlocking() && player.getNoDamageTicks() == 0 && (event.getCause() == DamageCause.ENTITY_ATTACK || event.getCause() == DamageCause.PROJECTILE)){
 			if(!lastParryAttempt.containsKey(player.getName()))
 				lastParryAttempt.put(player.getName(), 0L);
 			if(System.currentTimeMillis() - lastParryAttempt.get(player.getName()) < parrying.getInt("parry-time") && Math.random() < parrying.getDouble("parry-chance")){
 				event.setCancelled(true);
 				player.getWorld().playEffect(player.getLocation(), Effect.ZOMBIE_CHEW_IRON_DOOR, 0);
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', parrying.getString("parry-message")));
+				if(event.getDamage() > player.getHealth() && statTracking)
+					StatHandler.incrementStat(player, "life-saving parries");
 			}
 			else if(System.currentTimeMillis() - lastParryAttempt.get(player.getName()) > parrying.getInt("disarm-time") && Math.random() < parrying.getDouble("disarm-chance")){
 				player.getWorld().dropItemNaturally(player.getLocation(), player.getItemInHand());
@@ -132,11 +149,11 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGH)
 	public void headshotBonus(EntityDamageEvent event){
 		if(!headshots.getBoolean("enabled"))
 			return;
-		if(!(event.getEntity() instanceof Player))
+		if(!(event.getEntity() instanceof Player) || event.isCancelled())
 			return;
 		Player player = (Player) event.getEntity();		
 		if(!(event instanceof EntityDamageByEntityEvent))
@@ -149,6 +166,8 @@ public class CombatMods extends JavaPlugin implements Listener{
 				if(proj.getShooter() instanceof Player)
 					((Player) proj.getShooter()).sendMessage(ChatColor.translateAlternateColorCodes('&', headshots.getString("dealt-message")));
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', headshots.getString("taken-message")));
+				if(statTracking)
+					StatHandler.incrementStat((Player) proj.getShooter(), "headshots"); 
 			}
 		}
 	}
@@ -288,6 +307,45 @@ public class CombatMods extends JavaPlugin implements Listener{
 			return;
 		if(event.getCause() == DamageCause.FALL)
 			event.setDamage((int) (event.getDamage() * brokenKnees.getDouble("fall-multiplier")));
+	}
+	
+	@EventHandler
+	public void assassinations(PlayerInteractEntityEvent event){
+		if(!assassinations.getBoolean("enabled"))
+			return;
+		if(!(event.getRightClicked() instanceof Player))
+			return;
+		final Player player = event.getPlayer();
+		final Player victim  = (Player) event.getRightClicked();
+		
+		if(player.getLocation().distance(victim.getLocation()) < 2 && (Math.abs(getYaw(player) - getYaw(victim)) < 45 || Math.abs(getYaw(player) - getYaw(victim)) > 315)){
+			final EntityDamageEvent testEvent = new EntityDamageByEntityEvent(player, victim, DamageCause.CUSTOM, 9001);
+			Bukkit.getPluginManager().callEvent(testEvent);
+			if(testEvent.isCancelled())
+				return;
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
+				if(victim.getHealth() > 0 && player.getLocation().distance(victim.getLocation()) < 2 && (Math.abs(getYaw(player) - getYaw(victim)) < 45 || Math.abs(getYaw(player) - getYaw(victim)) > 315)){
+					victim.setHealth(0);
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&', assassinations.getString("dealt-message")));
+					victim.sendMessage(ChatColor.translateAlternateColorCodes('&', assassinations.getString("taken-message")));
+					if(statTracking)
+						StatHandler.incrementStat(player, "assassinations");
+				}
+			}}, 20);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
+				if(victim.getHealth() == 0)
+					victim.setLastDamageCause(testEvent);
+			}}, 20);
+		}
+	}
+	
+	private double getYaw(Player player){
+		double yaw = player.getLocation().getYaw();
+		if(yaw >= 360)
+			yaw -= 360;
+		if(yaw < 0)
+			yaw += 360;
+		return yaw;
 	}
 	
 }
