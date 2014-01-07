@@ -50,3 +50,5 @@ ballistae:
   cooldown: 2000
   cooldown-message: '&c*** Loading Ballista ***'
   no-ammo-message: '&c*** Nothing to launch ***'
+no-durability:
+  enabled: true
