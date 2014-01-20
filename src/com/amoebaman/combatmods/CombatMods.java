@@ -50,7 +50,11 @@ import org.bukkit.util.Vector;
 public class CombatMods extends JavaPlugin implements Listener{
 
 	private PluginLogger log;
+<<<<<<< HEAD
 	
+=======
+	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, ballistae, noDurability;
+>>>>>>> 1d6199e47d0d6e089444a93e5978d9600bd0217f
 	private File configFile;
 	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability;
 	
@@ -94,6 +98,10 @@ public class CombatMods extends JavaPlugin implements Listener{
 			antispamBows = getConfig().getConfigurationSection("antispam-bows");
 			brokenKnees = getConfig().getConfigurationSection("broken-knees");
 			assassinations = getConfig().getConfigurationSection("assassinations");
+<<<<<<< HEAD
+=======
+			ballistae = getConfig().getConfigurationSection("ballistae");
+>>>>>>> 1d6199e47d0d6e089444a93e5978d9600bd0217f
 			noDurability = getConfig().getConfigurationSection("no-durability");
 		}
 		catch(Exception e){
@@ -373,6 +381,101 @@ public class CombatMods extends JavaPlugin implements Listener{
 		if(yaw < 0)
 			yaw += 360;
 		return yaw;
+	}
+
+	@SuppressWarnings("deprecation")
+	@EventHandler
+	public void infiniteWeaponArmorDurability(EntityDamageEvent event){
+		if(!noDurability.getBoolean("enabled"))
+			return;
+		if(event.getEntityType() == EntityType.PLAYER){
+			final Player victim = (Player) event.getEntity();
+			for(final ItemStack armor : victim.getInventory().getArmorContents())
+				if(armor != null)
+					Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
+						armor.setDurability((short) 0);
+						victim.updateInventory();
+					}});
+		}
+		if(event instanceof EntityDamageByEntityEvent){
+			EntityDamageByEntityEvent eEvent = (EntityDamageByEntityEvent) event;
+			final Player damager;
+			if(eEvent.getDamager().getType() == EntityType.PLAYER)
+				damager = (Player) eEvent.getDamager();
+			else if(eEvent.getDamager().getType() == EntityType.ARROW){
+				Arrow arrow = (Arrow) eEvent.getDamager();
+				if(arrow.getShooter().getType() == EntityType.PLAYER)
+					damager = (Player) arrow.getShooter();
+				else
+					damager = null;
+			}
+<<<<<<< HEAD
+			else
+				damager = null;
+			if(damager != null){
+				Material weapon = damager.getItemInHand().getType();
+				if(weapon.name().contains("SWORD") || weapon.name().contains("AXE"))
+					Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
+						damager.getItemInHand().setDurability((short) 0);
+						damager.updateInventory();
+					}});
+=======
+			Block center = player.getLocation().getBlock();
+			
+			Block ballista = getBallista(center, face);
+					
+			if(ballista != null){
+				if(!launchTimes.containsKey(player.getName()))
+					launchTimes.put(player.getName(), 0L);
+				if(System.currentTimeMillis() - launchTimes.get(player.getName()) <= ballistae.getInt("cooldown")){
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&', ballistae.getString("cooldown-message")));
+					return;
+				}
+				Location projSpawn = ballista.getLocation().clone().add(0.5, 0.5, 0.5);
+				List<Block> line = player.getLineOfSight(transparent, 250);
+				Location target = line.get(line.size() - 1).getLocation();
+				Vector velocity = target.clone().subtract(projSpawn.clone()).toVector();
+				velocity = velocity.multiply(1 / velocity.length());
+				
+				Inventory inv = player.getInventory();
+				Material munitions = Material.AIR;
+				if(inv.contains(Material.ARROW))
+					munitions = Material.ARROW;
+				switch(munitions){
+				case ARROW:
+					Arrow arrow = player.getWorld().spawnArrow(projSpawn, velocity, (float)(ARROW_SPEED * ballistae.getDouble("arrow-flight-speed")), 0);
+					arrow.setShooter(player);
+					ballistaArrows.add(arrow.getEntityId());
+					player.getWorld().playEffect(projSpawn, Effect.BOW_FIRE, 0);
+					launchTimes.put(player.getName(), System.currentTimeMillis());
+					break;
+				default:
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&', ballistae.getString("no-ammo-message")));
+				}
+				int slot = inv.first(munitions);
+				if(slot >= 0){
+					ItemStack ammo = inv.getItem(slot);
+					ammo.setAmount(ammo.getAmount() - 1);
+					inv.setItem(slot, ammo);
+				}
+>>>>>>> 1d6199e47d0d6e089444a93e5978d9600bd0217f
+			}
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	@EventHandler
+	public void infiniteBowDurability(ProjectileLaunchEvent event){
+		if(!noDurability.getBoolean("enabled"))
+			return;
+		if(event.getEntityType() == EntityType.ARROW){
+			final Arrow arrow = (Arrow) event.getEntity();
+			if(arrow.getShooter() != null && arrow.getShooter().getType() == EntityType.PLAYER)
+				Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
+					((Player) arrow.getShooter()).getItemInHand().setDurability((short) 0);
+					((Player) arrow.getShooter()).updateInventory();
+				}});
+		}
 	}
 
 	@SuppressWarnings("deprecation")
