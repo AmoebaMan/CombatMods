@@ -6,7 +6,6 @@
 *.exe
 *.o
 *.so
-*.class
 
 # Packages #
 ############
@@ -31,12 +30,13 @@
 ######################
 .DS_Store
 .DS_Store?
-.project
-.classpath
-.settings
 ._*
 .Spotlight-V100
 .Trashes
-Icon?
 ehthumbs.db
 Thumbs.db
+target
+.settings
+.classpath
+.options
+.project
