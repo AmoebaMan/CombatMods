@@ -367,7 +367,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 				damager = (Player) eEvent.getDamager();
 			else if(eEvent.getDamager().getType() == EntityType.ARROW){
 				Arrow arrow = (Arrow) eEvent.getDamager();
-				if(arrow.getShooter().getType() == EntityType.PLAYER)
+				if(arrow.getShooter() instanceof Player)
 					damager = (Player) arrow.getShooter();
 				else
 					damager = null;
@@ -393,7 +393,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			return;
 		if(event.getEntityType() == EntityType.ARROW){
 			final Arrow arrow = (Arrow) event.getEntity();
-			if(arrow.getShooter() != null && arrow.getShooter().getType() == EntityType.PLAYER)
+			if(arrow.getShooter() != null && arrow.getShooter() instanceof Player)
 				Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
 					((Player) arrow.getShooter()).getItemInHand().setDurability((short) 0);
 					((Player) arrow.getShooter()).updateInventory();
