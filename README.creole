@@ -1,0 +1,3 @@
+==CombatMods==
+
+CraftBukkit plugin - provides several distinct modifications to combat that can be individually activated
