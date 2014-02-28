@@ -158,10 +158,9 @@ public class CombatMods extends JavaPlugin implements Listener{
 		EntityDamageByEntityEvent eEvent = (EntityDamageByEntityEvent) event;
 		if(eEvent.getDamager() instanceof Arrow){
 			Projectile proj = (Projectile) eEvent.getDamager();
-			if(proj.getLocation().distance(player.getEyeLocation()) <= 1.2){
+			if(proj.getLocation().distance(player.getEyeLocation()) <= 1.2 && proj.getShooter() instanceof Player){
 				event.setDamage((int) (event.getDamage() * headshots.getDouble("multiplier")));
-				if(proj.getShooter() instanceof Player)
-					((Player) proj.getShooter()).sendMessage(ChatColor.translateAlternateColorCodes('&', headshots.getString("dealt-message").replace("%victim%", player.getName())));
+				((Player) proj.getShooter()).sendMessage(ChatColor.translateAlternateColorCodes('&', headshots.getString("dealt-message").replace("%victim%", player.getName())));
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', headshots.getString("taken-message").replace("%player%", (((Player) proj.getShooter()).getName()))));
 				if(statTracking)
 					StatMaster.getHandler().incrementStat((Player) proj.getShooter(), "headshots"); 
