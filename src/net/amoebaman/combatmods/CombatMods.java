@@ -19,12 +19,14 @@ import org.bukkit.event.vehicle.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 
 public class CombatMods extends JavaPlugin implements Listener{
 	
 	private PluginLogger log;
 	private File configFile;
-	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability;
+	private ConfigurationSection parrying, headshots, tooHeavyToSprint, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability;
+	private int sprintTask = 0;
 	private boolean statTracking;
 	private HashSet<Byte> transparent;
 	
@@ -58,7 +60,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			getConfig().save(configFile);
 			parrying = getConfig().getConfigurationSection("parrying");
 			headshots = getConfig().getConfigurationSection("headshots");
-			lunging = getConfig().getConfigurationSection("lunging");
+			tooHeavyToSprint = getConfig().getConfigurationSection("too-heavy-to-sprint");
 			armoredBoats= getConfig().getConfigurationSection("armored-boats");
 			fastArrows = getConfig().getConfigurationSection("fast-arrows");
 			arrowRetrieval = getConfig().getConfigurationSection("arrow-retrieval");
@@ -69,7 +71,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 		catch(Exception e){
 			e.printStackTrace();
-			throw new Exception();
+			throw new Exception("something went horribly wrong while loading the config");
 		}
 		
 		statTracking = Bukkit.getPluginManager().getPlugin("StatMaster") != null;
@@ -78,6 +80,13 @@ public class CombatMods extends JavaPlugin implements Listener{
 			StatMaster.getHandler().registerStat(new Statistic("Headshots", 0, "combat"));
 			StatMaster.getHandler().registerStat(new Statistic("Assassinations", 0, "combat"));
 		}
+		
+		if(sprintTask > 0 && tooHeavyToSprint.getBoolean("enabled"))
+			sprintTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable(){ public void run(){
+				for(Player each : Bukkit.getOnlinePlayers())
+					if(each.hasPotionEffect(PotionEffectType.SLOW))
+						each.setSprinting(false);
+			}}, 0, 0);
 		
 		for(String component : getConfig().getKeys(false))
 			log.info(component + " " + (getConfig().getConfigurationSection(component).getBoolean("enabled") ? "enabled" : "disabled"));
@@ -168,15 +177,12 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
     @EventHandler
-	public void lunging(PlayerMoveEvent event){
-		if(!lunging.getBoolean("enabled"))
-			return;
-		Player player = event.getPlayer();
-		if(player.isSprinting() && event.getFrom().getY() < event.getTo().getY() && event.getTo().getY() - event.getFrom().getY() != 0.5
-				&& player.isOnGround() && !player.getLocation().getBlock().isLiquid() && player.getNoDamageTicks() == 0 && player.getFoodLevel() > 0)
-			player.setFoodLevel(player.getFoodLevel() - lunging.getInt("food-per-lunge", 2));
+	public void tooHeavyToSpring(final PlayerToggleSprintEvent event){
+		if(tooHeavyToSprint.getBoolean("enabled") && event.getPlayer().hasPotionEffect(PotionEffectType.SLOW) && event.isSprinting())
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
+				event.getPlayer().setSprinting(false);
+			}});
 	}
 	
 	@EventHandler

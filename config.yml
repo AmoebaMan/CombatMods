@@ -14,9 +14,8 @@ headshots:
   multiplier: 2
   dealt-message: '&2*** Headshot on %victim% ***'
   taken-message: '&c*** Headshot from %player% ***'
-lunging:
+too-heavy-to-sprint:
   enabled: false
-  food-per-lunge: 2
 armored-boats:
   enabled: true
   prevent-boat-litter: true
