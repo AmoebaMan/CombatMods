@@ -1,4 +1,4 @@
-package com.amoebaman.combatmods;
+package net.amoebaman.combatmods;
 
 import java.io.File;
 import java.util.*;
