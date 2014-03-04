@@ -168,13 +168,14 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler
+	@SuppressWarnings("deprecation")
+    @EventHandler
 	public void lunging(PlayerMoveEvent event){
 		if(!lunging.getBoolean("enabled"))
 			return;
 		Player player = event.getPlayer();
 		if(player.isSprinting() && event.getFrom().getY() < event.getTo().getY() && event.getTo().getY() - event.getFrom().getY() != 0.5
-				&& !player.getLocation().getBlock().isLiquid() && player.getNoDamageTicks() == 0 && player.getFoodLevel() > 0)
+				&& player.isOnGround() && !player.getLocation().getBlock().isLiquid() && player.getNoDamageTicks() == 0 && player.getFoodLevel() > 0)
 			player.setFoodLevel(player.getFoodLevel() - lunging.getInt("food-per-lunge", 2));
 	}
 	
