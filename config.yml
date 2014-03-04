@@ -16,8 +16,7 @@ headshots:
   taken-message: '&c*** Headshot from %player% ***'
 lunging:
   enabled: true
-  leap: 1.5
-  message: '&c*** Lunged ***'
+  food-per-lunge: 2
 armored-boats:
   enabled: true
   prevent-boat-litter: true
