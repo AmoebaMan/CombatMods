@@ -15,7 +15,7 @@ headshots:
   dealt-message: '&2*** Headshot on %victim% ***'
   taken-message: '&c*** Headshot from %player% ***'
 lunging:
-  enabled: true
+  enabled: false
   food-per-lunge: 2
 armored-boats:
   enabled: true
