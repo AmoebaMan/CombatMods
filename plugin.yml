@@ -1,4 +1,4 @@
-main: com.amoebaman.combatmods.CombatMods
+main: net.amoebaman.combatmods.CombatMods
 
 name: CombatMods
 version: 1.2
