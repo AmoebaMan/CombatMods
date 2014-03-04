@@ -42,8 +42,6 @@ assassinations:
   death-time: 1000
   dealt-message: '&2*** Assassinated %victim% ***'
   taken-message: '&c*** Assassinated by %player% ***'
-<<<<<<< HEAD
-=======
 ballistae:
   enabled: true
   arrow-flight-speed: 2.5
@@ -51,6 +49,5 @@ ballistae:
   cooldown: 2000
   cooldown-message: '&c*** Loading Ballista ***'
   no-ammo-message: '&c*** Nothing to launch ***'
->>>>>>> 1d6199e47d0d6e089444a93e5978d9600bd0217f
 no-durability:
   enabled: true
