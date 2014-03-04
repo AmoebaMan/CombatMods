@@ -74,7 +74,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		
 		statTracking = Bukkit.getPluginManager().getPlugin("StatMaster") != null;
 		if(statTracking){
-			StatMaster.getHandler().registerStat(new Statistic("Life-saving parries", 0, "combat"));
+			StatMaster.getHandler().registerStat(new Statistic("Life saving parries", 0, "combat"));
 			StatMaster.getHandler().registerStat(new Statistic("Headshots", 0, "combat"));
 			StatMaster.getHandler().registerStat(new Statistic("Assassinations", 0, "combat"));
 		}
@@ -135,7 +135,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 				player.getWorld().playEffect(player.getLocation(), Effect.ZOMBIE_CHEW_IRON_DOOR, 0);
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', parrying.getString("parry-message")));
 				if(event.getDamage() > player.getHealth() && statTracking)
-					StatMaster.getHandler().incrementStat(player, "life-saving parries");
+					StatMaster.getHandler().incrementStat(player, "life saving parries");
 			}
 			else if(System.currentTimeMillis() - lastParryAttempt.get(player.getName()) > parrying.getInt("disarm-time") && Math.random() < parrying.getDouble("disarm-chance"))
 				Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
