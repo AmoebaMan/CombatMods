@@ -72,7 +72,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			throw new Exception();
 		}
 		
-		statTracking = Bukkit.getPluginManager().getPlugin("PvPStatTracker") != null;
+		statTracking = Bukkit.getPluginManager().getPlugin("StatMaster") != null;
 		if(statTracking){
 			StatMaster.getHandler().registerStat(new Statistic("Life-saving parries", 0, "combat"));
 			StatMaster.getHandler().registerStat(new Statistic("Headshots", 0, "combat"));
