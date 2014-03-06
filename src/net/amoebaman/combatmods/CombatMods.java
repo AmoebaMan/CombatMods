@@ -1,39 +1,65 @@
 package net.amoebaman.combatmods;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
 
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
+import net.amoebaman.utils.plugin.MetricsLite;
+import net.amoebaman.utils.plugin.Updater;
+import net.amoebaman.utils.plugin.Updater.UpdateType;
 
-import org.bukkit.*;
-import org.bukkit.command.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Effect;
+import org.bukkit.Material;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.*;
-import org.bukkit.event.*;
-import org.bukkit.event.entity.*;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Boat;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.player.*;
-import org.bukkit.event.vehicle.*;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class CombatMods extends JavaPlugin implements Listener{
-	
-	private PluginLogger log;
+
 	private File configFile;
 	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability, potionLobber;
 	private boolean statTracking;
 	
 	public void onEnable(){
-		log = new PluginLogger(this);
+		Bukkit.getPluginManager().registerEvents(this, this);
+		
 		getDataFolder().mkdirs();
 		configFile = new File(getDataFolder().getPath() + "/config.yml");
 		try{ loadConfig(); }
 		catch(Exception e){ e.printStackTrace(); }
-		Bukkit.getPluginManager().registerEvents(this, this);
+		
+		try { new MetricsLite(this).start(); }
+		catch (Exception e) { e.printStackTrace(); }
+		
+		Updater.checkConfig();
+		if(Updater.isEnabled())
+			new Updater(this, 42663, getFile(), UpdateType.DEFAULT, true);
 	}
 	
 	public void loadConfig() throws Exception{
@@ -69,7 +95,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 		
 		for(String component : getConfig().getKeys(false))
-			log.info(component + " " + (getConfig().getConfigurationSection(component).getBoolean("enabled") ? "enabled" : "disabled"));
+			getLogger().info(component + " " + (getConfig().getConfigurationSection(component).getBoolean("enabled") ? "enabled" : "disabled"));
 	}
 	
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
