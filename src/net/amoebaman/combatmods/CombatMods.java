@@ -24,7 +24,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 	
 	private PluginLogger log;
 	private File configFile;
-	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability;
+	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability, potionLobber;
 	private boolean statTracking;
 	private HashSet<Byte> transparent;
 	
@@ -66,6 +66,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			brokenKnees = getConfig().getConfigurationSection("broken-knees");
 			assassinations = getConfig().getConfigurationSection("assassinations");
 			noDurability = getConfig().getConfigurationSection("no-durability");
+			potionLobber = getConfig().getConfigurationSection("potion-lobber");
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -175,7 +176,6 @@ public class CombatMods extends JavaPlugin implements Listener{
 		Player player = event.getPlayer();
 		if(player.isSprinting() && event.getFrom().getY() < event.getTo().getY() && event.getTo().getY() - event.getFrom().getY() != 0.5){
 			player.setSprinting(false);
-			player.setVelocity(player.getVelocity().multiply(0.5));
 			player.sendMessage(ChatColor.translateAlternateColorCodes('&', lunging.getString("message")));
 		}
 	}
@@ -403,7 +403,9 @@ public class CombatMods extends JavaPlugin implements Listener{
 	
 	@EventHandler
 	public void potionLobber(ProjectileLaunchEvent event){
+		if(!potionLobber.getBoolean("enabled"))
+			return;
 		if(event.getEntityType() == EntityType.SPLASH_POTION)
-			event.getEntity().setVelocity(event.getEntity().getVelocity().multiply(2));
+			event.getEntity().setVelocity(event.getEntity().getVelocity().multiply(potionLobber.getDouble("multiplier")));
 	}
 }

@@ -16,7 +16,6 @@ headshots:
   taken-message: '&c*** Headshot from %player% ***'
 lunging:
   enabled: false
-  leap: 1.5
   message: '&c*** Lunged ***'
 armored-boats:
   enabled: true
@@ -43,12 +42,8 @@ assassinations:
   death-time: 1000
   dealt-message: '&2*** Assassinated %victim% ***'
   taken-message: '&c*** Assassinated by %player% ***'
-ballistae:
-  enabled: true
-  arrow-flight-speed: 2.5
-  fire-charge-flight-speed: 1.5
-  cooldown: 2000
-  cooldown-message: '&c*** Loading Ballista ***'
-  no-ammo-message: '&c*** Nothing to launch ***'
 no-durability:
   enabled: true
+potion-lobber:
+  enabled: true
+  multiplier: 1.5
