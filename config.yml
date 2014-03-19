@@ -17,6 +17,8 @@ headshots:
 lunging:
   enabled: false
   message: '&c*** Lunged ***'
+airborne:
+  enabled: false
 armored-boats:
   enabled: true
   prevent-boat-litter: true

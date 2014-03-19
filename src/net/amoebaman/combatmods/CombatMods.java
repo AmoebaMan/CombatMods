@@ -43,8 +43,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class CombatMods extends JavaPlugin implements Listener{
 
 	private File configFile;
-	private ConfigurationSection parrying, headshots, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability, potionLobber;
+	private ConfigurationSection parrying, headshots, airborne, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability, potionLobber;
 	private boolean statTracking;
+	private int airborneTaskId = -1;
 	
 	public void onEnable(){
 		Bukkit.getPluginManager().registerEvents(this, this);
@@ -62,6 +63,10 @@ public class CombatMods extends JavaPlugin implements Listener{
 			new Updater(this, 42663, getFile(), UpdateType.DEFAULT, true);
 	}
 	
+	public void onDisable(){
+		Bukkit.getScheduler().cancelTask(airborneTaskId);
+	}
+	
 	public void loadConfig() throws Exception{
 		try{
 			if(!configFile.exists()){
@@ -72,6 +77,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			getConfig().save(configFile);
 			parrying = getConfig().getConfigurationSection("parrying");
 			headshots = getConfig().getConfigurationSection("headshots");
+			airborne = getConfig().getConfigurationSection("airborne");
 			lunging = getConfig().getConfigurationSection("lunging");
 			armoredBoats= getConfig().getConfigurationSection("armored-boats");
 			fastArrows = getConfig().getConfigurationSection("fast-arrows");
@@ -86,6 +92,10 @@ public class CombatMods extends JavaPlugin implements Listener{
 			e.printStackTrace();
 			throw new Exception("something went horribly wrong while loading the config");
 		}
+		
+		Bukkit.getScheduler().cancelTask(airborneTaskId);
+		if(airborne.getBoolean("enabled", false))
+			airborneTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new AirborneRegulator(), 0L, 1L);
 		
 		statTracking = Bukkit.getPluginManager().getPlugin("StatMaster") != null;
 		if(statTracking){
