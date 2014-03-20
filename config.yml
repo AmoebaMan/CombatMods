@@ -28,7 +28,7 @@ fast-arrows:
     disable-damage-increase: true
 elevated-archery:
     enabled: true
-    max-extra: 0.5
+    max-extra: 0.75
 arrow-retrieval:
     enabled: true
     retrieval-rate: 0.7

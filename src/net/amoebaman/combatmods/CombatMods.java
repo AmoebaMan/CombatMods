@@ -255,15 +255,17 @@ public class CombatMods extends JavaPlugin implements Listener{
 	}
 	
 	@EventHandler
-	public void elevatedArcher(EntityDamageByEntityEvent event){
+	public void elevatedArchery(EntityDamageByEntityEvent event){
 		if(!elevatedArchery.getBoolean("enabled", true))
 			return;
 		if(event.getDamager() instanceof Arrow && event.getDamager().hasMetadata("launch-pos")){
 			Vector start = ((Location) event.getDamager().getMetadata("launch-pos").get(0).value()).toVector();
 			Vector finish = event.getDamager().getLocation().toVector();
 			Vector diff = finish.clone().subtract(start);
-			double extra = elevatedArchery.getDouble("max-extra", 1.5) * Math.sin(diff.getY() / diff.getX());
-			event.setDamage(event.getDamage() + event.getDamage() * extra);
+			double ydiff = -diff.getY();
+			double xzdiff = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getZ(), 2));
+			double mult = 1 + elevatedArchery.getDouble("max-extra", 0.75) * Math.sin( Math.atan(ydiff / xzdiff) );
+			event.setDamage(event.getDamage() * mult);
 		}
 	}
 	
