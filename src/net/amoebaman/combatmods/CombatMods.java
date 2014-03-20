@@ -9,10 +9,7 @@ import net.amoebaman.utils.plugin.MetricsLite;
 import net.amoebaman.utils.plugin.Updater;
 import net.amoebaman.utils.plugin.Updater.UpdateType;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Effect;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -26,26 +23,28 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public class CombatMods extends JavaPlugin implements Listener{
-
+	
 	private File configFile;
-	private ConfigurationSection parrying, headshots, airborne, lunging, armoredBoats, fastArrows, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability, potionLobber;
+	private ConfigurationSection parrying, headshots, airborne, lunging, armoredBoats, fastArrows, elevatedArchery, arrowRetrieval, antispamBows, brokenKnees, assassinations, noDurability, potionLobber;
 	private boolean statTracking;
 	private int airborneTaskId = -1;
+	
+	private static final HashMap<String, Long> lastParryAttempt = new HashMap<String, Long>();
+	private static final HashMap<LivingEntity, Integer> arrowsLodged = new HashMap<LivingEntity, Integer>();
+	private HashMap<String, Long> lastBowDraw = new HashMap<String, Long>();
 	
 	public void onEnable(){
 		Bukkit.getPluginManager().registerEvents(this, this);
@@ -81,6 +80,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			lunging = getConfig().getConfigurationSection("lunging");
 			armoredBoats= getConfig().getConfigurationSection("armored-boats");
 			fastArrows = getConfig().getConfigurationSection("fast-arrows");
+			elevatedArchery = getConfig().getConfigurationSection("elevated-archery");
 			arrowRetrieval = getConfig().getConfigurationSection("arrow-retrieval");
 			antispamBows = getConfig().getConfigurationSection("antispam-bows");
 			brokenKnees = getConfig().getConfigurationSection("broken-knees");
@@ -122,7 +122,6 @@ public class CombatMods extends JavaPlugin implements Listener{
 		return true;
 	}
 	
-	private static final HashMap<String, Long> lastParryAttempt = new HashMap<String, Long>();
 	@EventHandler
 	public void detectParrying(PlayerInteractEvent event){
 		if(!parrying.getBoolean("enabled"))
@@ -192,7 +191,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			}
 		}
 	}
-
+	
 	@EventHandler
 	public void lunging(PlayerMoveEvent event){
 		if(!lunging.getBoolean("enabled"))
@@ -228,6 +227,15 @@ public class CombatMods extends JavaPlugin implements Listener{
 			event.getVehicle().remove();
 	}
 	
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void tagArrows(ProjectileLaunchEvent event){
+		Projectile proj = event.getEntity();
+		if(proj instanceof Arrow && proj.getShooter() instanceof Player){
+			proj.setMetadata("launch-vel", new FixedMetadataValue(this, proj.getVelocity()));
+			proj.setMetadata("launch-pos", new FixedMetadataValue(this, proj.getLocation()));
+		}
+	}
+	
 	@EventHandler
 	public void fastArrows(ProjectileLaunchEvent event){
 		if(!fastArrows.getBoolean("enabled"))
@@ -239,27 +247,33 @@ public class CombatMods extends JavaPlugin implements Listener{
 	}
 	
 	@EventHandler
-	public void fastArrowNerf(EntityDamageEvent event){
+	public void fastArrowNerf(EntityDamageByEntityEvent event){
 		if(!(fastArrows.getBoolean("enabled") && fastArrows.getBoolean("disable-damage-increase")))
 			return;
-		if(!(event instanceof EntityDamageByEntityEvent))
-			return;
-		EntityDamageByEntityEvent eEvent = (EntityDamageByEntityEvent) event;
-		if(eEvent.getDamager() instanceof Arrow && !eEvent.getDamager().hasMetadata("ballista"))
+		if(event.getDamager() instanceof Arrow && event.getDamager().hasMetadata("launch-vel"))
 			event.setDamage((int) (event.getDamage() / fastArrows.getDouble("speed")));
 	}
 	
-	private static final HashMap<LivingEntity, Integer> arrowsLodged = new HashMap<LivingEntity, Integer>();
 	@EventHandler
-	public void arrowRetrievalLogger(EntityDamageEvent event){
+	public void elevatedArcher(EntityDamageByEntityEvent event){
+		if(!elevatedArchery.getBoolean("enabled", true))
+			return;
+		if(event.getDamager() instanceof Arrow && event.getDamager().hasMetadata("launch-pos")){
+			Vector start = ((Location) event.getDamager().getMetadata("launch-pos").get(0).value()).toVector();
+			Vector finish = event.getDamager().getLocation().toVector();
+			Vector diff = finish.clone().subtract(start);
+			double extra = elevatedArchery.getDouble("max-extra", 1.5) * Math.sin(diff.getY() / diff.getX());
+			event.setDamage(event.getDamage() + event.getDamage() * extra);
+		}
+	}
+	
+	@EventHandler
+	public void logArrowHits(EntityDamageByEntityEvent event){
 		if(!arrowRetrieval.getBoolean("enabled"))
 			return;
-		if(!(event instanceof EntityDamageByEntityEvent))
+		if(!(event.getDamager() instanceof Arrow && event.getEntity() instanceof LivingEntity))
 			return;
-		EntityDamageByEntityEvent realEvent = (EntityDamageByEntityEvent) event;
-		if(!(realEvent.getDamager() instanceof Arrow && event.getEntity() instanceof LivingEntity))
-			return;
-		Arrow arrow = (Arrow) realEvent.getDamager();
+		Arrow arrow = (Arrow) event.getDamager();
 		LivingEntity victim = (LivingEntity) event.getEntity();
 		if(!(arrow.getShooter() instanceof Player))
 			return;
@@ -284,7 +298,6 @@ public class CombatMods extends JavaPlugin implements Listener{
 		arrowsLodged.remove(victim);
 	}
 	
-	private HashMap<String, Long> lastBowDraw = new HashMap<String, Long>();
 	@EventHandler
 	public void detectBowDraw(PlayerInteractEvent event){
 		if(!antispamBows.getBoolean("enabled"))
@@ -302,17 +315,17 @@ public class CombatMods extends JavaPlugin implements Listener{
 		if(!antispamBows.getBoolean("enabled"))
 			return;
 		Player shooter = null;
-		if(event.getEntity().getShooter() instanceof Player)
+		if(event.getEntity().getShooter() instanceof Player){
 			shooter = (Player) event.getEntity().getShooter();
-		if(shooter == null)
-			return;
-		if(!lastBowDraw.containsKey(shooter.getName()))
-			lastBowDraw.put(shooter.getName(), 0L);
-		if(System.currentTimeMillis() - lastBowDraw.get(shooter.getName()) < antispamBows.getInt("minimum-draw")){
-			event.setCancelled(true);
-			if(!shooter.getItemInHand().containsEnchantment(Enchantment.ARROW_INFINITE))
-				shooter.getWorld().dropItemNaturally(shooter.getLocation(), new ItemStack(Material.ARROW, 1));
-			shooter.sendMessage(ChatColor.translateAlternateColorCodes('&', antispamBows.getString("message")));
+			if(!lastBowDraw.containsKey(shooter.getName()))
+				lastBowDraw.put(shooter.getName(), 0L);
+			
+			if(System.currentTimeMillis() - lastBowDraw.get(shooter.getName()) < antispamBows.getInt("minimum-draw")){
+				event.setCancelled(true);
+				if(!shooter.getItemInHand().containsEnchantment(Enchantment.ARROW_INFINITE) && shooter.getGameMode() != GameMode.CREATIVE)
+					shooter.getWorld().dropItemNaturally(shooter.getLocation(), new ItemStack(Material.ARROW, 1));
+				shooter.sendMessage(ChatColor.translateAlternateColorCodes('&', antispamBows.getString("message")));
+			}
 		}
 	}
 	
@@ -432,4 +445,5 @@ public class CombatMods extends JavaPlugin implements Listener{
 		if(event.getEntityType() == EntityType.SPLASH_POTION)
 			event.getEntity().setVelocity(event.getEntity().getVelocity().multiply(potionLobber.getDouble("multiplier")));
 	}
+	
 }
