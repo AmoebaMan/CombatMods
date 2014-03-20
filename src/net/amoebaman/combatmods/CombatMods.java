@@ -144,7 +144,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void skillfulParrying(EntityDamageEvent event){
 		if(!parrying.getBoolean("enabled"))
 			return;
@@ -170,7 +170,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler(priority=EventPriority.HIGH)
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void headshotBonus(EntityDamageEvent event){
 		if(!headshots.getBoolean("enabled"))
 			return;
@@ -236,7 +236,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void fastArrows(ProjectileLaunchEvent event){
 		if(!fastArrows.getBoolean("enabled"))
 			return;
@@ -246,7 +246,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void fastArrowNerf(EntityDamageByEntityEvent event){
 		if(!(fastArrows.getBoolean("enabled") && fastArrows.getBoolean("disable-damage-increase")))
 			return;
@@ -254,7 +254,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			event.setDamage((int) (event.getDamage() / fastArrows.getDouble("speed")));
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void elevatedArchery(EntityDamageByEntityEvent event){
 		if(!elevatedArchery.getBoolean("enabled", true))
 			return;
@@ -312,7 +312,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			lastBowDraw.put(player.getName(), System.currentTimeMillis());
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void antispamBows(ProjectileLaunchEvent event){
 		if(!antispamBows.getBoolean("enabled"))
 			return;
@@ -331,7 +331,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(priority=EventPriority.HIGHEST)
 	public void brokenKnees(EntityDamageEvent event){
 		if(!brokenKnees.getBoolean("enabled"))
 			return;
