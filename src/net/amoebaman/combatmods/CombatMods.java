@@ -265,6 +265,8 @@ public class CombatMods extends JavaPlugin implements Listener{
 			double ydiff = -diff.getY();
 			double xzdiff = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getZ(), 2));
 			double mult = 1 + elevatedArchery.getDouble("max-extra", 0.75) * Math.sin( Math.atan(ydiff / xzdiff) );
+			if(mult < 0)
+				mult = 0;
 			event.setDamage(event.getDamage() * mult);
 		}
 	}
@@ -353,25 +355,52 @@ public class CombatMods extends JavaPlugin implements Listener{
 			return;
 		final Player player = event.getPlayer();
 		final Player victim  = (Player) event.getRightClicked();
-		
-		if(player.getLocation().distance(victim.getLocation()) < 2 && (Math.abs(getYaw(player) - getYaw(victim)) < 45 || Math.abs(getYaw(player) - getYaw(victim)) > 315)){
+		/*
+		 * Make sure the player is at the right range, and that their rotation is comparable
+		 * This is how we check to make sure they're behind their target
+		 * 
+		 * Also make sure there isn't already an assassination in progress
+		 */
+		double yawDiff = Math.abs(getYaw(player) - getYaw(victim));
+		double distance = player.getLocation().distance(victim.getLocation());
+		if(distance < 2 && distance > 0.5 && (yawDiff < 45 || yawDiff > 315)){
+			/*
+			 * Call a tester event to make sure the damage is actually allowed
+			 */
 			final EntityDamageEvent testEvent = new EntityDamageByEntityEvent(player, victim, DamageCause.CUSTOM, 9001.0);
 			Bukkit.getPluginManager().callEvent(testEvent);
 			if(testEvent.isCancelled())
 				return;
-			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
-				if(victim.getHealth() > 0 && player.getHealth() > 0 && player.getLocation().distance(victim.getLocation()) < 2 && (Math.abs(getYaw(player) - getYaw(victim)) < 45 || Math.abs(getYaw(player) - getYaw(victim)) > 315))
+			/*
+			 * Schedule the warning message
+			 */
+			final JavaPlugin plugin = this;
+			Bukkit.getScheduler().runTaskLater(plugin, new Runnable(){ public void run(){
+				
+				double yawDiff = Math.abs(getYaw(player) - getYaw(victim));
+				double distance = player.getLocation().distance(victim.getLocation());
+				if(victim.getHealth() > 0 && player.getHealth() > 0 && distance < 2 && distance > 0.5 && (yawDiff < 45 || yawDiff > 315) && !victim.hasMetadata("assassination-marker"))
 					victim.sendMessage(ChatColor.translateAlternateColorCodes('&', assassinations.getString("warning-message").replace("%player%", player.getName())));
+				victim.setMetadata("assassination-marker", new FixedMetadataValue(plugin, 0));
+				
 			}}, 20 * assassinations.getInt("warning-time", 500) / 1000);
-			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable(){ public void run(){
-				if(victim.getHealth() > 0 && player.getHealth() > 0 && player.getLocation().distance(victim.getLocation()) < 2 && (Math.abs(getYaw(player) - getYaw(victim)) < 45 || Math.abs(getYaw(player) - getYaw(victim)) > 315)){
+			/*
+			 * Schedule the assassination
+			 */
+			Bukkit.getScheduler().runTaskLater(plugin, new Runnable(){ public void run(){
+				
+				double yawDiff = Math.abs(getYaw(player) - getYaw(victim));
+				double distance = player.getLocation().distance(victim.getLocation());
+				if(victim.getHealth() > 0 && player.getHealth() > 0 && distance < 2 && distance > 0.5 && (yawDiff < 45 || yawDiff > 315)){
 					victim.setHealth(0);
-					victim.setLastDamageCause(new EntityDamageEvent(victim, DamageCause.CUSTOM, 0.0));
+					victim.setLastDamageCause(new EntityDamageByEntityEvent(player, victim, DamageCause.CUSTOM, victim.getMaxHealth()));
 					player.sendMessage(ChatColor.translateAlternateColorCodes('&', assassinations.getString("dealt-message").replace("%victim%", victim.getName())));
 					victim.sendMessage(ChatColor.translateAlternateColorCodes('&', assassinations.getString("taken-message").replace("%player%", player.getName())));
 					if(statTracking)
 						StatMaster.getHandler().incrementStat(player, "assassinations");
 				}
+				victim.removeMetadata("assassination-marker", plugin);
+				
 			}}, 20 * assassinations.getInt("death-time", 500) / 1000);
 		}
 	}
