@@ -367,7 +367,7 @@ public class CombatMods extends JavaPlugin implements Listener{
 			/*
 			 * Call a tester event to make sure the damage is actually allowed
 			 */
-			final EntityDamageEvent testEvent = new EntityDamageByEntityEvent(player, victim, DamageCause.CUSTOM, 9001.0);
+			EntityDamageEvent testEvent = new EntityDamageByEntityEvent(player, victim, DamageCause.CUSTOM, 9001.0);
 			Bukkit.getPluginManager().callEvent(testEvent);
 			if(testEvent.isCancelled())
 				return;
