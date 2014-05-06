@@ -3,11 +3,11 @@ package net.amoebaman.combatmods;
 import java.io.File;
 import java.util.HashMap;
 
+import net.amoebaman.amoebautils.plugin.MetricsLite;
+import net.amoebaman.amoebautils.plugin.Updater;
+import net.amoebaman.amoebautils.plugin.Updater.UpdateType;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
-import net.amoebaman.utils.plugin.MetricsLite;
-import net.amoebaman.utils.plugin.Updater;
-import net.amoebaman.utils.plugin.Updater.UpdateType;
 
 import org.bukkit.*;
 import org.bukkit.command.Command;
